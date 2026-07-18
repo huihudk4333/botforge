@@ -1,0 +1,47 @@
+{
+  "supportRoleIds": ["PUT_SUPPORT_ROLE_ID_HERE"],
+  "ticketCategoryId": "PUT_DISCORD_CATEGORY_CHANNEL_ID_HERE",
+  "transcriptLogChannelId": "PUT_LOG_CHANNEL_ID_HERE",
+  "welcomeChannelId": "PUT_WELCOME_CHANNEL_ID_HERE",
+  "welcomeMessage": "Welcome {user} to {server}! We hope you enjoy your stay.",
+  "maxOpenTicketsPerUser": 1,
+  "closeCountdownSeconds": 5,
+  "panel": {
+    "title": "🎫 Support Tickets",
+    "description": "Need help? Select a category below and a private ticket channel will be created for you.",
+    "color": "#5865F2",
+    "footer": "We usually respond within a few hours"
+  },
+  "categories": [
+    {
+      "id": "general",
+      "label": "General Support",
+      "description": "General questions or help",
+      "emoji": "🧩"
+    },
+    {
+      "id": "billing",
+      "label": "Billing & Payments",
+      "description": "Issues with orders, refunds, payments",
+      "emoji": "💳"
+    },
+    {
+      "id": "technical",
+      "label": "Technical Issue",
+      "description": "Bugs, errors, or something broken",
+      "emoji": "🛠️"
+    },
+    {
+      "id": "report",
+      "label": "Report a User",
+      "description": "Report abuse or rule-breaking",
+      "emoji": "🚨"
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "description": "Anything else",
+      "emoji": "❓"
+    }
+  ]
+}

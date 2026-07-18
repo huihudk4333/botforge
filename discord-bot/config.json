@@ -15,14 +15,14 @@
   "categories": [
     {
       "id": "general",
-      "label": "General Support",
-      "description": "General questions or help",
+      "label": "custom bot",
+      "description": "get your custom bot",
       "emoji": "🧩"
     },
     {
       "id": "billing",
       "label": "Billing & Payments",
-      "description": "Issues with orders, refunds, payments",
+      "description": "Issues with orders, hosting payments",
       "emoji": "💳"
     },
     {

@@ -14,7 +14,7 @@
   },
   "categories": [
     {
-      "id": "general",
+      "id": "bot",
       "label": "custom bot",
       "description": "get your custom bot",
       "emoji": "🧩"

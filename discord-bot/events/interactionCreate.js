@@ -3,8 +3,6 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
 } = require('discord.js');
 const { createTicket, claimTicket, closeTicket } = require('../utils/ticketManager');
 const {
@@ -30,18 +28,6 @@ function buildQuestionModal(customId, title, questions) {
   });
 
   return modal;
-}
-
-async function submitApplication(interaction, appId, appConfig, fullAnswers) {
-  clearPartial(interaction.user.id, appId);
-
-  const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
-  const reviewChannel = await interaction.guild.channels
-    .fetch(appConfig.reviewChannelId)
-    .catch(() => null);
-
-  if (reviewChannel) await reviewChannel.send({ embeds: [embed] });
-  await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
 }
 
 module.exports = {
@@ -108,24 +94,6 @@ module.exports = {
           await interaction.showModal(modal);
           return;
         }
-
-        if (interaction.customId.startsWith('application_continue_')) {
-          const appId = interaction.customId.replace('application_continue_', '');
-          const appConfig = (config.applications || []).find((a) => a.id === appId);
-
-          if (!appConfig) {
-            return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
-          }
-
-          const remaining = appConfig.questions.slice(5);
-          const modal2 = buildQuestionModal(
-            `application_modal2_${appId}`,
-            appConfig.label.slice(0, 45),
-            remaining
-          );
-          await interaction.showModal(modal2);
-          return;
-        }
       }
 
       if (interaction.isModalSubmit() && interaction.customId === 'ticket_close_reason_modal') {
@@ -152,22 +120,24 @@ module.exports = {
 
         if (remaining.length === 0) {
           const fullAnswers = getPartial(interaction.user.id, appId);
-          await submitApplication(interaction, appId, appConfig, fullAnswers);
+          clearPartial(interaction.user.id, appId);
+
+          const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
+          const reviewChannel = await interaction.guild.channels
+            .fetch(appConfig.reviewChannelId)
+            .catch(() => null);
+
+          if (reviewChannel) await reviewChannel.send({ embeds: [embed] });
+          await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
           return;
         }
 
-        const continueRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`application_continue_${appId}`)
-            .setLabel('Continue Application')
-            .setStyle(ButtonStyle.Primary)
+        const modal2 = buildQuestionModal(
+          `application_modal2_${appId}`,
+          appConfig.label.slice(0, 45),
+          remaining
         );
-
-        await interaction.reply({
-          content: 'Almost done! Click below to answer the last question.',
-          components: [continueRow],
-          ephemeral: true,
-        });
+        await interaction.showModal(modal2);
         return;
       }
 
@@ -176,4 +146,36 @@ module.exports = {
         const appConfig = (config.applications || []).find((a) => a.id === appId);
 
         if (!appConfig) {
-          return interaction.reply({ content: 'That application no longer exists.',
+          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        const firstFive = getPartial(interaction.user.id, appId) || [];
+        const remainingCount = appConfig.questions.length - 5;
+        const lastAnswers = [];
+        for (let i = 0; i < remainingCount; i++) {
+          lastAnswers.push(interaction.fields.getTextInputValue(`q${i}`));
+        }
+
+        const fullAnswers = [...firstFive, ...lastAnswers];
+        clearPartial(interaction.user.id, appId);
+
+        const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
+        const reviewChannel = await interaction.guild.channels
+          .fetch(appConfig.reviewChannelId)
+          .catch(() => null);
+
+        if (reviewChannel) await reviewChannel.send({ embeds: [embed] });
+        await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
+        return;
+      }
+    } catch (err) {
+      console.error('Error handling interaction:', err);
+      const errMsg = { content: 'Something went wrong handling that action.', ephemeral: true };
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp(errMsg).catch(() => {});
+      } else {
+        await interaction.reply(errMsg).catch(() => {});
+      }
+    }
+  },
+};

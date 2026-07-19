@@ -35,6 +35,6 @@ module.exports = {
       );
 
     const row = new ActionRowBuilder().addComponents(menu);
-    await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+await interaction.reply({ embeds: [embed], components: [row] });
   },
 };

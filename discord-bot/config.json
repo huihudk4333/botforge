@@ -43,5 +43,39 @@
       "description": "Anything else",
       "emoji": "❓"
     }
+  ],
+  "applications": [
+    {
+      "id": "staff",
+      "label": "Staff Application",
+      "description": "Apply to become staff",
+      "emoji": "🛡️",
+      "color": "#5865F2",
+      "reviewChannelId": "PUT_STAFF_REVIEW_CHANNEL_ID_HERE",
+      "questions": [
+        "What is your age?",
+        "What timezone are you in?",
+        "Why do you want to be staff?",
+        "Do you have prior moderation experience?",
+        "How many hours a week can you dedicate?",
+        "Anything else you'd like to add?"
+      ]
+    },
+    {
+      "id": "bot",
+      "label": "Bot Developer Application",
+      "description": "Apply to join the dev team",
+      "emoji": "🧩",
+      "color": "#57F287",
+      "reviewChannelId": "PUT_DEV_REVIEW_CHANNEL_ID_HERE",
+      "questions": [
+        "What languages/frameworks do you know?",
+        "Link a project you've built",
+        "How many years of experience do you have?",
+        "Why do you want to join the team?",
+        "Are you available for voice calls?",
+        "Anything else you'd like to add?"
+      ]
+    }
   ]
 }

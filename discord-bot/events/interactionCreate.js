@@ -5,12 +5,35 @@ const {
   ActionRowBuilder,
 } = require('discord.js');
 const { createTicket, claimTicket, closeTicket } = require('../utils/ticketManager');
+const {
+  savePartial,
+  getPartial,
+  clearPartial,
+  buildApplicationEmbed,
+} = require('../utils/applicationManager');
+const config = require('../config.json');
+
+function buildQuestionModal(customId, title, questions) {
+  const modal = new ModalBuilder().setCustomId(customId).setTitle(title);
+
+  questions.forEach((question, i) => {
+    const input = new TextInputBuilder()
+      .setCustomId(`q${i}`)
+      .setLabel(question.slice(0, 45))
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true)
+      .setMaxLength(1000);
+
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
+  });
+
+  return modal;
+}
 
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
     try {
-      // Slash commands
       if (interaction.isChatInputCommand()) {
         const command = interaction.client.commands.get(interaction.commandName);
         if (!command) return;
@@ -18,14 +41,31 @@ module.exports = {
         return;
       }
 
-      // Dropdown: category selection -> create ticket
       if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_category_select') {
         const categoryId = interaction.values[0];
         await createTicket(interaction, categoryId);
         return;
       }
 
-      // Buttons
+      if (interaction.isStringSelectMenu() && interaction.customId === 'application_select') {
+        const appId = interaction.values[0];
+        const appConfig = (config.applications || []).find((a) => a.id === appId);
+
+        if (!appConfig) {
+          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        const firstFive = appConfig.questions.slice(0, 5);
+        const modal = buildQuestionModal(
+          `application_modal1_${appId}`,
+          appConfig.label.slice(0, 45),
+          firstFive
+        );
+
+        await interaction.showModal(modal);
+        return;
+      }
+
       if (interaction.isButton()) {
         if (interaction.customId === 'ticket_claim') {
           await claimTicket(interaction);
@@ -56,10 +96,76 @@ module.exports = {
         }
       }
 
-      // Modal submit: close with reason
       if (interaction.isModalSubmit() && interaction.customId === 'ticket_close_reason_modal') {
         const reason = interaction.fields.getTextInputValue('close_reason_input');
         await closeTicket(interaction, reason);
+        return;
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal1_')) {
+        const appId = interaction.customId.replace('application_modal1_', '');
+        const appConfig = (config.applications || []).find((a) => a.id === appId);
+
+        if (!appConfig) {
+          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        const answers = [];
+        for (let i = 0; i < 5; i++) {
+          answers.push(interaction.fields.getTextInputValue(`q${i}`));
+        }
+        savePartial(interaction.user.id, appId, answers);
+
+        const remaining = appConfig.questions.slice(5);
+
+        if (remaining.length === 0) {
+          const fullAnswers = getPartial(interaction.user.id, appId);
+          clearPartial(interaction.user.id, appId);
+
+          const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
+          const reviewChannel = await interaction.guild.channels
+            .fetch(appConfig.reviewChannelId)
+            .catch(() => null);
+
+          if (reviewChannel) await reviewChannel.send({ embeds: [embed] });
+          await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
+          return;
+        }
+
+        const modal2 = buildQuestionModal(
+          `application_modal2_${appId}`,
+          appConfig.label.slice(0, 45),
+          remaining
+        );
+        await interaction.showModal(modal2);
+        return;
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId.startsWith('application_modal2_')) {
+        const appId = interaction.customId.replace('application_modal2_', '');
+        const appConfig = (config.applications || []).find((a) => a.id === appId);
+
+        if (!appConfig) {
+          return interaction.reply({ content: 'That application no longer exists.', ephemeral: true });
+        }
+
+        const firstFive = getPartial(interaction.user.id, appId) || [];
+        const remainingCount = appConfig.questions.length - 5;
+        const lastAnswers = [];
+        for (let i = 0; i < remainingCount; i++) {
+          lastAnswers.push(interaction.fields.getTextInputValue(`q${i}`));
+        }
+
+        const fullAnswers = [...firstFive, ...lastAnswers];
+        clearPartial(interaction.user.id, appId);
+
+        const embed = buildApplicationEmbed(interaction.member, appConfig, fullAnswers);
+        const reviewChannel = await interaction.guild.channels
+          .fetch(appConfig.reviewChannelId)
+          .catch(() => null);
+
+        if (reviewChannel) await reviewChannel.send({ embeds: [embed] });
+        await interaction.reply({ content: '✅ Your application has been submitted!', ephemeral: true });
         return;
       }
     } catch (err) {

@@ -51,7 +51,7 @@
       "description": "Apply to become staff",
       "emoji": "🛡️",
       "color": "#5865F2",
-      "reviewChannelId": "PUT_STAFF_REVIEW_CHANNEL_ID_HERE",
+      "reviewChannelId": "1528342788230615060",
       "questions": [
         "What is your age?",
         "What timezone are you in?",
@@ -67,7 +67,7 @@
       "description": "Apply to join the dev team",
       "emoji": "🧩",
       "color": "#57F287",
-      "reviewChannelId": "PUT_DEV_REVIEW_CHANNEL_ID_HERE",
+      "reviewChannelId": "1528342788230615060",
       "questions": [
         "What languages/frameworks do you know?",
         "Link a project you've built",
